@@ -1,5 +1,7 @@
 import requests
-from bs4 import BeautifulSoup 
+from bs4 import BeautifulSoup
+import re
+import json
 
 
 url = "https://www.autovit.ro/"
@@ -36,11 +38,43 @@ def best_offer():
     }
     print(json_output)      
 
+
 def daily_offer():
-    print("test")
+
+    offer = soup.find_all('section', { 'class' : 'ek2z86x0'})
+    
+    output_json = []
+    for j in offer:
+        
+        car_name = j.find('h3', {'class' : 'e1lmj3dz0'}).text
+        car_price = j.find('div', { 'class' : 'evznqyf1'}).text
+
+        offer2 = j.find_all('span', 'optimus-app-3tn7f8')
+        
+        for i in offer2:
+            properties = i.text
+
+            match = re.match(r'.*([1-2][0-9]{3})', i.text)
+            if match is not None:
+                car_year = match.group(1)
+            if(properties.endswith('km')):
+                car_km = properties
+            elif(properties.endswith('cm3')):
+                car_engine = properties
+        json = {
+            'name' : car_name,
+            'price' : car_price,
+            'km' : car_km,
+            'year' : car_year
+        }
+        output_json.append(json)
+    return output_json
+        
+   
 
 def main():
     best_offer()
+    print(daily_offer())
 
 if __name__=="__main__":
     main()
