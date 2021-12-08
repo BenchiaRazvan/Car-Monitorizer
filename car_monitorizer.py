@@ -1,7 +1,7 @@
 from typing import final
 import requests
 from bs4 import BeautifulSoup
-import re
+import time
 import json
 
 
@@ -72,21 +72,32 @@ def daily_offer():
 
 
 def json_file():
-    
+
+    with open('data.json', 'r+') as outfile:
+        if(outfile.read() == ''):
+            outfile.write(json.dumps([]))
+        outfile.close()
+
+
     current_day_json = daily_offer()
     current_day_json.append(best_offer())
 
     with open('data.json', 'r') as outfile:
         prev_json = json.load(outfile)
+        outfile.close()
 
     json_object = json.dumps(current_day_json + prev_json, indent = 4)
+
     with open('data.json', 'w') as outfile:
         outfile.write(json_object)
+        outfile.close()
        
 
 def main():
 
-    json_file()
+    while True:
+        json_file()
+        time.sleep(3600 * 24)
     
 if __name__=="__main__":
     main()
