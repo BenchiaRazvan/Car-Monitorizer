@@ -1,3 +1,4 @@
+from typing import final
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -36,56 +37,52 @@ def best_offer():
         'year': car_year,
         'km' : car_km,
     }
-    informations_list.append(json_output)
-    return informations_list
+
+    return json_output
 
 
 def daily_offer():
 
     offer = soup.find_all('section', { 'class' : 'optimus-app-fdjy12 ek2z86x0'})
-    
+
+
     output_json = []
+
     for j in offer:
         
-        offer2 = j.find_all('span', 'optimus-app-3tn7f8')
-        
+        span_elements = j.find_all('section', { 'class' : 'optimus-app-7kiohr e2nxjc60'})
 
-        car_name = j.find('h3', {'class' : 'e1lmj3dz0'}).text
-        car_price = j.find('div', { 'class' : 'evznqyf1'}).text
+        for i in span_elements:
+            
+            car_name = i.find('h3', {'class' : 'e1lmj3dz0 optimus-app-g6vljw'}).text
+            car_price = i.find('div', { 'class' : 'evznqyf1 optimus-app-5t16gy'}).text
 
-        for i in j.find_all('span', 'optimus-app-3tn7f8'):
-            properties = i.text
+            
+            properties = i.find('ul', {'class' : 'optimus-app-13n8fh9 e16henwp0'}).find_all('li')
 
-            match = re.match(r'.*([1-2][0-9]{3})', i.text)
-            if match is not None:
-                car_year = match.group(1)
-            if(properties.endswith('km')):
-                car_km = properties
-            elif(properties.endswith('cm3')):
-                car_engine = properties
-
-        json = {
-            'name' : car_name,
-            'price' : car_price,
-            'km' : car_km,
-            'year' : car_year,
-            'engine' : car_engine
-        }
-        output_json.append(json)
+            json = {
+                'name' : car_name,
+                'price' : car_price,
+                'km' : properties[0].text,
+                'year' : properties[1].text,
+                'engine' : properties[2].text
+            }
+            output_json.append(json)
     return output_json
 
 
 def json_file():
+    
+    current_day_json = daily_offer()
+    current_day_json.append(best_offer())
 
-    daily_json = []
-    best_json = []
-    final_json = []
+    with open('data.json', 'r') as outfile:
+        prev_json = json.load(outfile)
+
+    json_object = json.dumps(current_day_json + prev_json, indent = 4)
     with open('data.json', 'w') as outfile:
-        daily_json = daily_offer()
-        best_json = best_offer()
-        final_json = daily_json + best_json
-        print(final_json)
-        json.dump(final_json, outfile)
+        outfile.write(json_object)
+       
 
 def main():
 
